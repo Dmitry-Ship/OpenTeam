@@ -1,32 +1,24 @@
-from openai import OpenAI
-from dotenv import load_dotenv
+
 from base import Agent, Team
 import os
-
-load_dotenv(override=True)  # take environment variables from .env.
-
-client = OpenAI(
-    base_url=os.getenv("BASE_URL"),
-)
+from dotenv import load_dotenv
+load_dotenv(override=True)  
 
 MODEL = os.getenv("OPENAI_MODEL_NAME")
 
 coder = Agent(
     name='developer',
-    client=client, 
     model=MODEL, 
     system_message="You are a python developer"
 )
 
 reviewer = Agent(
     name='code reviewer',
-    client=client, 
     model=MODEL, 
-    system_message="You are a code reviewer"
+    system_message="You are a code reviewer, given a code, make sure it is correct, does not contain magic number, missing imports, undefined variables, etc. Return corrected version."
 )
 
 team = Team(
-    client=client, 
     model=MODEL, 
     agents=[coder, reviewer]
 )

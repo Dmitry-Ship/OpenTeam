@@ -1,16 +1,25 @@
 import json
+from openai import OpenAI
+from dotenv import load_dotenv
+import os
+
+load_dotenv(override=True)  # take environment variables from .env.
 
 class Agent:
-    def __init__(self, name, client, model, system_message=""):
+    def __init__(self, name, model, system_message="", tools=[]):
         self.chat_history = [
             {
                 "role": "system",
                 "content": system_message
             }
         ]
+        self.system_message = system_message
         self.name = name
         self.model = model
-        self.client = client
+        self.llm = OpenAI(
+            base_url=os.getenv("BASE_URL"),
+        )
+        self.tools = tools
 
     def chat(self, prompt):
         self.chat_history += [{
@@ -18,7 +27,7 @@ class Agent:
             "content": prompt,
         }]
 
-        response = self.client.chat.completions.create(
+        response = self.llm.chat.completions.create(
             temperature=0,
             messages=self.chat_history,
             model=self.model,
@@ -44,9 +53,18 @@ class Agent:
             "role": "system",
             "content": new_system_message
         }
+        self.system_message = new_system_message
+
+    def reset(self):
+        self.chat_history = [
+            {
+                "role": "system",
+                "content": self.system_message
+            }
+        ]
     
 class Team:
-    def __init__(self, client, model, agents):
+    def __init__(self, model, agents):
         self.agents_map = {}
         for agent in agents:
             self.agents_map[agent.name] = agent
@@ -54,7 +72,6 @@ class Team:
         self.model = model
         self.manager = Agent(
             name='manager',
-            client=client, 
             model=model, 
             system_message=f""""""
         )
@@ -68,23 +85,24 @@ class Team:
             Dont answer the message youself.
             Only respond in this format:
             {{
-                "name": "",
+                "name": "...",
             }}
             """)
 
     def start(self, problem):
-        prev_agent = None
+        called_agents = {}
         while True:
-            if prev_agent:
-                eligible_agents = [agent.name for agent in self.agents_map.values() if agent.name != prev_agent],
+            if len(called_agents) == len(self.agents_map):
+                break
+            if len(called_agents) > 0:
+                eligible_agents = [agent for agent in self.agents_map if agent not in called_agents]
                 self.update_system_message(eligible_agents)
 
             response = self.manager.chat(f"Which agent shoud respond to this? {problem} Respond in this format: {{\"name\": \"\"}}")
 
-            next_agent = json.loads(response)["name"]
+            next_agent = json.loads(response).get("name")
 
             if next_agent in self.agents_map:
                 problem = self.agents_map[next_agent].chat(problem)
 
-            prev_agent = next_agent
-            
+                called_agents[next_agent] = next_agent            
