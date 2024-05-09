@@ -1,4 +1,4 @@
-from typing_extensions import Annotated
+from typing import Annotated
 from urllib.parse import urlparse
 import requests
 from infra.art_generation import ArtGeneration
@@ -35,17 +35,21 @@ def download_image(url) -> tuple[int, str]:
     else:
         return 1, print(f"Failed to retrieve the image. Status code: {response.status_code}")
         
-def generate_image(prompt: Annotated[str, "Prompt"]) -> str:
-    print("✨ Generating image ...")
-    status, image_url = art_generation.generate_image(prompt)
+def generate_images(prompt: Annotated[str, "Prompt"]) -> str:
+    """
+    Generate images using ArtGeneration
+    """
+    print("✨ Generating images ...")
+    status, images = art_generation.generate_images(prompt)
     if status == 1:
         print("❌ Generating image failed")
-        return None
+        return "failed to generate image"
 
-    print("📸 Downloading image ...")
-    status, message = download_image(image_url)
-    if status == 1:
-        print("❌ Downloading image failed", message)
-        return None
+    print("📸 Downloading images ...")
+    for image_url in images:
+        status, message = download_image(image_url['link'])
+        if status == 1:
+            print("❌ Downloading image failed", message)
+            return "failed to download image"
 
-    return image_url
+    return images
