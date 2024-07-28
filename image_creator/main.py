@@ -1,6 +1,7 @@
 from .agents import image_creator
 
 while True:
-  taks = input("\n> ")
+  task = input("\n> ")
 
-  image_creator.chat(taks)
+  result = image_creator.chat(task)
+

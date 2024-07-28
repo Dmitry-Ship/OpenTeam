@@ -62,11 +62,11 @@ class ArtGeneration:
         generation_id = request_response["data"]["generation_id"]
 
         start_time = time.time()
-        timeout = 100  # seconds
+        timeout = 120  # seconds
 
         time.sleep(30) 
         while time.time() - start_time < timeout:
-            time.sleep(5)  # Wait for 5 seconds before checking again
+            time.sleep(10)  # Wait for 5 seconds before checking again
             generation_list_response = self.fetch_generation_list()
             generation_list = generation_list_response["data"]["generation_list"]
 

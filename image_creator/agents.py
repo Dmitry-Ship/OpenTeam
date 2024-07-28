@@ -12,7 +12,7 @@ image_creator = Agent(
     model=MODEL,
     tools=[generate_images],
     system_message="""
-    Given a topic, write an image description.
+    Given a topic, write a detailed image description.
     Follow this pattern: [type of shot] of [subject], [description of the subject], [setting], [items in the scene], [lighting], shot on [camera]
     """
 )

@@ -15,7 +15,6 @@ class Agent:
                 "content": system_message
             }
         ]
-        self.system_message = system_message
         self.name = name
         self.model = model
         self.llm = OpenAI(
@@ -27,7 +26,35 @@ class Agent:
 
     def get_last_message(self):
         return self.chat_history[-1]["content"]
-    
+
+    def chat(self, prompt):
+        self.chat_history.append({
+            "role": "user",
+            "content": prompt,
+        })
+        
+        response = self.llm.chat.completions.create(
+            temperature=0,
+            messages=self.chat_history,
+            model=self.model,
+            tools=self._tools_for_api() if len(self.tools) > 0 else None,
+            tool_choice="auto" if len(self.tools) > 0 else None,
+        )
+
+        response_message = response.choices[0].message
+ 
+        if response_message.tool_calls:
+            return self._handle_tool_call(response_message.tool_calls)
+
+        self.chat_history.append({
+            "role": "assistant",
+            "content": response_message.content,
+        }) 
+
+        print(f"🤖 {self.name}:", response_message.content)
+
+        return response_message.content
+
     def _describe_function(self, func):
         sig = inspect.signature(func)
         type_hints = get_type_hints(func)
@@ -74,43 +101,20 @@ class Agent:
     def _tools_for_api(self):
         return [self._describe_function(tool) for tool in self.tools.values()]
 
-    def _append_assistant_message(self, message):
-        print("🤖 ", message)
+    def _handle_tool_call(self, tool_calls):
         self.chat_history.append({
             "role": "assistant",
-            "content": message,
+            "content": None,
+            "tool_calls": tool_calls
         })
 
-    def chat(self, prompt):
-        self.chat_history += [{
-            "role": "user",
-            "content": prompt,
-        }]
-        print("😗 ", prompt)
-        response = self.llm.chat.completions.create(
-            temperature=0,
-            messages=self.chat_history,
-            model=self.model,
-            tools=self._tools_for_api(),
-            tool_choice="auto",
-        )
-
         final_response = ""
-        response_message = response.choices[0].message
-        if response_message.content:
-            final_response = response_message.content
-            self._append_assistant_message(response_message.content)
-
-        tool_calls = response_message.tool_calls
-        if not tool_calls:
-            return response_message.content
-        
         for tool_call in tool_calls:
             function_name = tool_call.function.name
             function_to_call = self.tools[function_name]
             function_args = json.loads(tool_call.function.arguments)
-            print("🛠️ calling function", function_name)
-            print("🛠️ arguments:", function_args)
+            print(f"🤖 {self.name} calling function", function_name)
+            print(f"🤖 {self.name} arguments:", function_args)
             function_response = function_to_call(**function_args)
             print("🛠️ response:", function_response)
             self.chat_history.append(
@@ -122,7 +126,7 @@ class Agent:
                 }
             )
 
-            second_response = self.llm.chat.completions.create(
+            call_result_response = self.llm.chat.completions.create(
                 temperature=0,
                 messages=self.chat_history,
                 model=self.model,
@@ -130,26 +134,24 @@ class Agent:
                 tool_choice="auto",
             )
 
-            if second_response.choices[0].message.content:
-                self._append_assistant_message(second_response.choices[0].message.content)
-                final_response = second_response.choices[0].message.content
-        
+            if call_result_response.choices[0].message.content:
+                print(f"🤖 {self.name}:", call_result_response.choices[0].message.content)
+                self.chat_history.append({
+                    "role": "assistant",
+                    "content": call_result_response.choices[0].message.content,
+                })
+                final_response = call_result_response.choices[0].message.content
+
         return final_response
-    
+
     def update_system_message(self, new_system_message):
         self.chat_history[0] = {
             "role": "system",
             "content": new_system_message
         }
-        self.system_message = new_system_message
 
     def reset(self):
-        self.chat_history = [
-            {
-                "role": "system",
-                "content": self.system_message
-            }
-        ]
+        self.chat_history = self.chat_history[:1]
     
 class Team:
     def __init__(self, model, agents):

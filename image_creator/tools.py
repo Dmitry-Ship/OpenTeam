@@ -35,17 +35,17 @@ def download_image(url) -> tuple[int, str]:
     else:
         return 1, print(f"Failed to retrieve the image. Status code: {response.status_code}")
         
-def generate_images(prompt: Annotated[str, "Prompt"]) -> str:
+def generate_images(prompt: Annotated[str, "Prompt"]) -> list[str]:
     """
     Generate images using ArtGeneration
     """
-    print("✨ Generating images ...")
+    print("🖼 Generating images ...")
     status, images = art_generation.generate_images(prompt)
     if status == 1:
         print("❌ Generating image failed")
         return "failed to generate image"
 
-    print("📸 Downloading images ...")
+    print("⬇️ Downloading images ...")
     for image_url in images:
         status, message = download_image(image_url['link'])
         if status == 1:
