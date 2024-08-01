@@ -8,7 +8,7 @@ load_dotenv(override=True)
 MODEL = os.getenv("OPENAI_MODEL_NAME")
 
 image_creator = Agent(
-    name='image analyzer',
+    name='image_creator',
     model=MODEL,
     tools=[generate_images],
     system_message="""

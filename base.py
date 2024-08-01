@@ -108,7 +108,6 @@ class Agent:
             "tool_calls": tool_calls
         })
 
-        final_response = ""
         for tool_call in tool_calls:
             function_name = tool_call.function.name
             function_to_call = self.tools[function_name]
@@ -126,23 +125,22 @@ class Agent:
                 }
             )
 
-            call_result_response = self.llm.chat.completions.create(
-                temperature=0,
-                messages=self.chat_history,
-                model=self.model,
-                tools=self._tools_for_api(),
-                tool_choice="auto",
-            )
+        call_result_response = self.llm.chat.completions.create(
+            temperature=0,
+            messages=self.chat_history,
+            model=self.model,
+        )
 
-            if call_result_response.choices[0].message.content:
-                print(f"🤖 {self.name}:", call_result_response.choices[0].message.content)
-                self.chat_history.append({
-                    "role": "assistant",
-                    "content": call_result_response.choices[0].message.content,
-                })
-                final_response = call_result_response.choices[0].message.content
+        if call_result_response.choices[0].message.content:
+            print(f"🤖 {self.name}:", call_result_response.choices[0].message.content)
+            self.chat_history.append({
+                "role": "assistant",
+                "content": call_result_response.choices[0].message.content,
+            })
 
-        return final_response
+            return call_result_response.choices[0].message.content
+
+        return None
 
     def update_system_message(self, new_system_message):
         self.chat_history[0] = {
