@@ -1,4 +1,4 @@
-from .tools import search_internet, ask_context
+from .tools import search_internet, ask_context, search_internet_params, ask_context_params
 from base import Agent
 from dotenv import load_dotenv
 import os
@@ -34,7 +34,8 @@ searcher = Agent(
 
     If it is necessary, use ask_context to get additional context, otherwise call search_internet.
 """,
-    tools=[search_internet, ask_context],
+    tools_params=[search_internet_params, ask_context_params],
+    tools_mapper={"search": search_internet, "ask_context": ask_context},
 )
 
 

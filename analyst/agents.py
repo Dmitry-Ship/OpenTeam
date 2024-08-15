@@ -1,5 +1,5 @@
 from base import Agent
-from .tools import run_query, get_schema
+from .tools import run_query, get_schema, run_query_params
 from dotenv import load_dotenv
 import os
 
@@ -15,10 +15,9 @@ analyst = Agent(
     Here is the schema of the database:
     {get_schema()}
 
-    Use run_query to retrieve data from the database. 
-    If you are asked to visualize the data, write python code (in a python coding block) that will create a graph visualization of provided data.
-    Write 'TERMINATE' if the task is done""",
-    tools=[run_query],
+    Use run_query to retrieve data from the database.""",
+    tools_mapper={"run_query": run_query},
+    tools_params=[run_query_params],
 )
 
 

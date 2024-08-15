@@ -4,13 +4,11 @@ import requests
 from infra.art_generation import ArtGeneration
 from dotenv import load_dotenv
 import os
+import replicate
+import openai
+from pydantic import BaseModel
 
 load_dotenv()
-
-art_generation = ArtGeneration(
-    email=os.getenv("ART_GENERATION_EMAIL"),
-    password=os.getenv("ART_GENERATION_PASSWORD"),
-)
 
 def download_image(url) -> tuple[int, str]:
     # Parse the URL and extract the filename
@@ -34,22 +32,56 @@ def download_image(url) -> tuple[int, str]:
         return 0, f"Image saved as {filename}"
     else:
         return 1, print(f"Failed to retrieve the image. Status code: {response.status_code}")
+
+class ArtGenerationTools:
+    def __init__(self):
+        self.art_generation = ArtGeneration(
+            email=os.getenv("ART_GENERATION_EMAIL"),
+            password=os.getenv("ART_GENERATION_PASSWORD"),
+        )
+
         
-def generate_images(prompt: Annotated[str, "Prompt"]) -> list[str]:
-    """
-    Generate images using ArtGeneration
-    """
+    def generate_images(self, prompt: Annotated[str, "Prompt"]) -> list[str]:
+        """
+        Generate images using ArtGeneration
+        """
+        print("🖼 Generating images ...")
+        status, images = self.art_generation.generate_images(prompt)
+        if status == 1:
+            print("❌ Generating image failed")
+            return "failed to generate image"
+
+        print("⬇️ Downloading images ...")
+        for image_url in images:
+            status, message = download_image(image_url['link'])
+            if status == 1:
+                print("❌ Downloading image failed", message)
+                return "failed to download image"
+
+        return images
+
+class GenerateImages(BaseModel):
+    prompt: str
+
+generate_images_params = openai.pydantic_function_tool(GenerateImages, name="generate_images", description="Generate images")
+
+def generate_images_flux(prompt):
     print("🖼 Generating images ...")
-    status, images = art_generation.generate_images(prompt)
-    if status == 1:
-        print("❌ Generating image failed")
-        return "failed to generate image"
+
+    output = replicate.run(
+        "black-forest-labs/flux-schnell",
+        input={
+            "prompt": prompt,
+        }
+    )
 
     print("⬇️ Downloading images ...")
-    for image_url in images:
-        status, message = download_image(image_url['link'])
+    
+    for image_url in output:
+        status, message = download_image(image_url)
         if status == 1:
             print("❌ Downloading image failed", message)
-            return "failed to download image"
+            return "failed to download image" 
 
-    return images
+
+    return output

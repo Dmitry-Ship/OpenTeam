@@ -2,16 +2,20 @@ from typing import Annotated
 from infra.postgres import PostgresManager
 from dotenv import load_dotenv
 import os
+import openai
+from pydantic import BaseModel
 
 load_dotenv(override=True)
 
 db_connection = PostgresManager()
 db_connection.connect_with_url(os.getenv("DB_URI"))
 
-def run_query(query: Annotated[str, "The sql query to run"]) -> Annotated[str, "The result of the query"]:
-    """
-    Run sql query
-    """
+
+class RunQueryParams(BaseModel):
+    query: str
+
+run_query_params = openai.pydantic_function_tool(RunQueryParams, name="run_query", description="Run sql query")
+def run_query(query):
     print("🔍 running query ...")
     return db_connection.run_sql(query)
 

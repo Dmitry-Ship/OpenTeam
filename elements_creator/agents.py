@@ -1,6 +1,5 @@
-import json
 from base import Agent
-from .tools import upsert_mindmap, get_all_text_from_flip
+from .tools import upsert_mindmap, get_all_text_from_flip, upsert_mindmap_params, get_all_text_from_flip_params
 from dotenv import load_dotenv
 import os
 
@@ -42,7 +41,8 @@ mindmap_creator = Agent(
                     - Association
     
     Pass the markdown to the upsert_mindmap function""",
-    tools=[upsert_mindmap],
+    tools_mapper={"upsert_mindmap": upsert_mindmap},
+    tools_params=[upsert_mindmap_params],
 )
 
 
@@ -57,6 +57,7 @@ suggester = Agent(
     }
 """,
     model=MODEL,
-    tools=[get_all_text_from_flip],
+    tools_params=[get_all_text_from_flip_params],
+    tools_mapper={"get_all_text_from_flip": get_all_text_from_flip},
 )
 

@@ -7,8 +7,8 @@ from .agents import suggester, mindmap_creator
 flip_id = os.getenv("FLIP_ID")
 
 def get_suggestions(flip_id):
-    suggester.chat(f"flip_id: '{flip_id}'")
-    data = json.loads(suggester.get_last_message())
+    result = suggester.chat(f"flip_id: '{flip_id}'")
+    data = json.loads(result)
     return data['suggestions']
 
 while True:

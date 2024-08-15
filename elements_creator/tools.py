@@ -7,6 +7,8 @@ from ulid import ULID
 from typing import Annotated, Optional
 import json
 import re
+import openai
+from pydantic import BaseModel
 
 load_dotenv(override=True)
 
@@ -453,10 +455,12 @@ def clean_text(text):
     # Removes markdown symbols used for formatting
     return re.sub(r"[\*\_\-]+", "", text)
 
-def upsert_mindmap(markdown: Annotated[str, "The markdown to be upserted"], flip_id: Annotated[str, "Flip id"]) -> Annotated[str, "The result of the query"]:
-    """
-    Parse the markdown and upsert the elements into the database.
-    """
+class UpsertMidmap(BaseModel):
+    markdown: str
+
+upsert_mindmap_params = openai.pydantic_function_tool(UpsertMidmap, name="upsert_mindmap", description="Parse the markdown and upsert the elements into the database.")
+def upsert_mindmap(markdown: Annotated[str, "The markdown to be upserted"]) -> Annotated[str, "The result of the query"]:
+    flip_id = os.getenv("FLIP_ID")
     print("parsing ...")
     structure = parse_mindmap_markdown(markdown)
     print("refining ...")
@@ -464,6 +468,11 @@ def upsert_mindmap(markdown: Annotated[str, "The markdown to be upserted"], flip
     print("upserting ...")
     return upsert(refined, flip_id)
 
+
+class GetAllTextFromFlip(BaseModel):
+    flip_id: str
+
+get_all_text_from_flip_params = openai.pydantic_function_tool(GetAllTextFromFlip, name="get_all_text_from_flip", description="Get all texts from elements of a 2D canvas.")
 def get_all_text_from_flip(flip_id: Annotated[str, "Flip id"]) -> Annotated[str, "The result of the query"]:
     return db_connection.run_sql(f"""SELECT (e.properties)->'text'->'value' AS text_value
    FROM elements e

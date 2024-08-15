@@ -1,14 +1,18 @@
 import re
 from youtube_transcript_api import YouTubeTranscriptApi
-from typing import Annotated
+import openai
+from pydantic import BaseModel
 
-def retreive_youtube_transcription(youtube_url: Annotated[str, "The youtube url to retreive transcriptions from"]) -> Annotated[str, "The combined transcript"]:
-    """
-    Useful to search for video transcriptions from the given url
-    The input should be a youtube url string
-    :param youtube_url: str, youtube url to retreive transcriptions
-    """
+class RetreiveYoutubeTranscription(BaseModel):
+    youtube_url: str
 
+retreive_youtube_transcription_params = openai.pydantic_function_tool(
+    RetreiveYoutubeTranscription, 
+    name="retreive_youtube_transcription", 
+    description="Useful to search for video transcriptions from the given url. The input should be a youtube url string :param youtube_url: str, youtube url to retreive transcriptions"
+)
+
+def retreive_youtube_transcription(youtube_url):
     print("📝 transcribing ...")
 
     pattern = r"(?:v=|be/|/watch\?v=|\?feature=youtu.be/)([\w-]+)"
