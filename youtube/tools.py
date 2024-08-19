@@ -13,7 +13,7 @@ retreive_youtube_transcription_params = openai.pydantic_function_tool(
 )
 
 def retreive_youtube_transcription(youtube_url):
-    print("📝 transcribing ...")
+    print("📝 transcribing ...", youtube_url)
 
     pattern = r"(?:v=|be/|/watch\?v=|\?feature=youtu.be/)([\w-]+)"
 
