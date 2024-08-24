@@ -36,7 +36,7 @@ python -m elements_creator.main
 ```
 
 ```
-streamlit run youtubes.py 
+streamlit run youtube_ui.py 
 ```
 
 ```

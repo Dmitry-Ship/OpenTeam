@@ -1,5 +1,5 @@
 from base import Agent
-from .tools import generate_images_flux, generate_images_params, ArtGenerationTools
+from .tools import generate_images_params, ArtGenerationTools
 from dotenv import load_dotenv
 import os
 
@@ -20,13 +20,3 @@ image_creator = Agent(
     """
 )
 
-image_creator_flux = Agent(
-    name='image_creator_flux',
-    model=MODEL,
-    tools_mapper={"generate_images": generate_images_flux},
-    tools_params=[generate_images_params],
-    system_message="""
-    Given a topic, write a detailed image description.
-    Follow this pattern: [type of shot] of [subject], [description of the subject], [setting], [items in the scene], [lighting], shot on [camera]
-    """
-)

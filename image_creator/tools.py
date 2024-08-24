@@ -4,7 +4,6 @@ import requests
 from infra.art_generation import ArtGeneration
 from dotenv import load_dotenv
 import os
-import replicate
 import openai
 from pydantic import BaseModel
 
@@ -38,6 +37,7 @@ class ArtGenerationTools:
         self.art_generation = ArtGeneration(
             email=os.getenv("ART_GENERATION_EMAIL"),
             password=os.getenv("ART_GENERATION_PASSWORD"),
+            model_id=int(os.getenv("ART_GENERATION_MODEL"))
         )
 
         
@@ -64,24 +64,3 @@ class GenerateImages(BaseModel):
     prompt: str
 
 generate_images_params = openai.pydantic_function_tool(GenerateImages, name="generate_images", description="Generate images")
-
-def generate_images_flux(prompt):
-    print("🖼 Generating images ...")
-
-    output = replicate.run(
-        "black-forest-labs/flux-schnell",
-        input={
-            "prompt": prompt,
-        }
-    )
-
-    print("⬇️ Downloading images ...")
-    
-    for image_url in output:
-        status, message = download_image(image_url)
-        if status == 1:
-            print("❌ Downloading image failed", message)
-            return "failed to download image" 
-
-
-    return output
